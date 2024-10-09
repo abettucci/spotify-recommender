@@ -7,7 +7,8 @@ pd.set_option('display.max_colwidth', None)
 def logueo_spotify():
      client_id = os.getenv('client_id')
      client_secret = os.getenv('client_secret')
-     sp_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id = client_id,
+     sp_client = spotipy.Spotify(auth_manager=SpotifyOAuth(
+                                                  client_id = client_id,
                                                   client_secret = client_secret,
                                                   redirect_uri = 'http://localhost:3000',
                                                   scope=[# Tracks, albums, artistas guardados en Biblioteca
@@ -49,8 +50,6 @@ def get_track_recommender(sp_client, artists_names, seed_genres, tracks_names, l
                print(f"No se encontraron resultados para {artist_name}")
      seed_artists = ','.join(artists_id_list)
 
-     print(seed_artists)
-
      #### Leemos los tracks del text input separados por coma y los convertimos a lista de ID para el input del recomendador
      tracks_names_list = ','.split(tracks_names)
      tracks_id_list = []
@@ -64,14 +63,10 @@ def get_track_recommender(sp_client, artists_names, seed_genres, tracks_names, l
                print(f"No se encontraron resultados para {track_name}")
      seed_tracks = ','.join(tracks_id_list)
 
-     print(seed_tracks)
-
      #### Formateamos los generos
      genres = seed_genres.split(',')
      seed_genres = [genre.strip().replace(' ', '-') for genre in genres]
      seed_genres = ','.join(seed_genres)
-
-     print(seed_genres)
 
      # Convertir en listas si no lo están y manejar si no hay valores (None)
      seed_artists = seed_artists.split(',') if seed_artists else None
@@ -100,8 +95,6 @@ def get_track_recommender(sp_client, artists_names, seed_genres, tracks_names, l
      # Convertimos la lista de diccionarios a un DataFrame de pandas
      song_recomendations_dict = pd.DataFrame(songs_data)
      
-     print(song_recomendations_dict)
-
      # results = sp.current_user_top_artists()
      # results = sp_client.current_user_recently_played()
 
@@ -110,4 +103,4 @@ def get_track_recommender(sp_client, artists_names, seed_genres, tracks_names, l
      #     track = item['track']
      #     print(idx, track['artists'][0]['name'], " – ", track['name'])
 
-     return recommendations
+     return song_recomendations_dict

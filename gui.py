@@ -3,6 +3,9 @@ import requests
 import urllib.parse
 from main import logueo_spotify, get_track_recommender, recommendation_genre_seeds
 
+def make_clickable(link):
+    return f'<a href="{link}" target="_blank">{link}</a>'
+
 # Create a title for the web app.
 st.title("Spotify API Recommender")
 
@@ -23,17 +26,7 @@ submit = st.button("Submit")
 # If the button is clicked.
 if submit:
 
-    results = get_track_recommender(sp_client, seed_artists, seed_genres, seed_tracks, 1 if limit=='' else int(limit), None)
-    
-    # Display the length of the results list.
-    st.write(f"Number of results: {len(results)}")
-    
-    # # Iterate over the results list to display each item.
-    # for item in results:
-    #     st.header(item["title"])
-    #     img_url = item["image"]
-    #     st.image(img_url, width=200)
-    #     st.write(item["price"])
-    #     st.write(item["location"])
-    #     st.write(f"https://www.facebook.com{item['link']}")
-    #     st.write("----")
+    dict_results = get_track_recommender(sp_client, seed_artists, seed_genres, seed_tracks, 1 if limit=='' else int(limit), None)
+    dict_results['song_url'] = dict_results['song_url'].apply(make_clickable)
+
+    st.markdown(dict_results.to_html(escape=False), unsafe_allow_html=True)
