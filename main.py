@@ -10,7 +10,7 @@ def logueo_spotify():
      sp_client = spotipy.Spotify(auth_manager=SpotifyOAuth(
                                                   client_id = client_id,
                                                   client_secret = client_secret,
-                                                  redirect_uri = 'https://spotify-recommender-fdgfxtwf3xed9ufqnilaan.streamlit.app/',
+                                                  redirect_uri = 'https://spotify-recommender-fdgfxtwf3xed9ufqnilaan.streamlit.app/callback',
                                                   scope=[# Tracks, albums, artistas guardados en Biblioteca
                                                        "user-library-read",
                                                        # User Info
