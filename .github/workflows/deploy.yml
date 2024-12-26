@@ -24,8 +24,8 @@ jobs:
 
       - name: Run script
         env:
-          client_id : ${{ secrets.client_id }}
-          client_secret: ${{ secrets.client_secret }}
+          client_id : ${{ secrets.CLIENT_ID }}
+          client_secret: ${{ secrets.CLIENT_SECRET }}
 
         run: |
           python main.py
