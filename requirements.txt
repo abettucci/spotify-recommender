@@ -1,6 +1,5 @@
 spotipy
 streamlit
 pandas
-os
 # fastapi
 # mangum
