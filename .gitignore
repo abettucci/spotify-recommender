@@ -1,3 +1,7 @@
 /venv
 /old
 /__pycache__/
+/save_recently_played_tracks.py
+/serverless.yml
+/app.py
+/.cache

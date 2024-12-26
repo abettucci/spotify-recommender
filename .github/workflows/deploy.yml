@@ -28,4 +28,4 @@ jobs:
           client_secret: ${{ secrets.client_secret }}
 
         run: |
-          python your_script.py
+          python gui.py
