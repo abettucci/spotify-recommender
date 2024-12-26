@@ -1,5 +1,5 @@
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials, SpotifyOAuth
+from spotipy.oauth2 import SpotifyOAuth
 import pandas as pd
 import os
 pd.set_option('display.max_colwidth', None)
@@ -9,8 +9,9 @@ def logueo_spotify():
      client_secret = os.getenv('client_secret')
      sp_client = spotipy.Spotify(auth_manager=SpotifyOAuth(
                                                   client_id = client_id,
-                                                  client_secret = client_secret,
+                                                  client_secret = client_secret,     
                                                   redirect_uri = 'https://spotify-recommender-fdgfxtwf3xed9ufqnilaan.streamlit.app/callback',
+                                                  # redirect_uri = 'http://localhost:3000',
                                                   scope=[# Tracks, albums, artistas guardados en Biblioteca
                                                        "user-library-read",
                                                        # User Info
@@ -28,12 +29,51 @@ def logueo_spotify():
                                                        "user-read-currently-playing",
                                                        "user-read-playback-state",
                                                        "user-read-recently-played"
-                                                       ]))
+                                                       ],
+                                                       open_browser=False))
      return sp_client
 
 def recommendation_genre_seeds(sp_client):
+     return sp_client.recommendation_genre_seeds() 
 
-     return sp_client.recommendation_genre_seeds()['genres']
+def get_artists_genres(sp_client, artists_names):
+     #### Leemos los artistas del text input separados por coma y los convertimos a lista de ID para el input del recomendador
+     # artists_names = [item.strip("'") for item in artists_names.split(',')]
+     artists_names_list = [name.strip("'") for name in artists_names.split(',')]
+     artists_id_list = []
+     for artist_name in artists_names_list:
+          artist_data = sp_client.search(q=artist_name, type='artist')
+          # Obtener el ID del primer artista en los resultados
+          if artist_data['artists']['items']:
+               artist = artist_data['artists']['items'][0]
+               artists_id_list.append(artist['id'])
+          else:
+               print(f"No se encontraron resultados para {artist_name}")
+     
+     artist_genres_list = []
+     for artist_id in artists_id_list:
+          artist_genres_list.append(sp_client.artist(artist_id)["genres"])
+
+     return artist_genres_list
+
+def get_related_artists(sp_client, artists_names):
+     #### Leemos los artistas del text input separados por coma y los convertimos a lista de ID para el input del recomendador
+     artists_names_list = [name.strip("'") for name in artists_names.split(',')]
+     artists_id_list = []
+     for artist_name in artists_names_list:
+          artist_data = sp_client.search(q=artist_name, type='artist')
+          # Obtener el ID del primer artista en los resultados
+          if artist_data['artists']['items']:
+               artist = artist_data['artists']['items'][0]
+               artists_id_list.append(artist['id'])
+          else:
+               print(f"No se encontraron resultados para {artist_name}")
+     
+     artist_related_artists = []
+     for artist_id in artists_id_list:
+          artist_related_artists.append(sp_client.artist_related_artists(artist_id))
+
+     return artist_related_artists
 
 def get_track_recommender(sp_client, artists_names, seed_genres, tracks_names, limit, country=None):
           
@@ -104,3 +144,8 @@ def get_track_recommender(sp_client, artists_names, seed_genres, tracks_names, l
      #     print(idx, track['artists'][0]['name'], " – ", track['name'])
 
      return song_recomendations_dict
+
+# sp_client = logueo_spotify()
+# sp_client.user()
+# sp_client.audio_analysis()
+# sp_client.audio_features()
