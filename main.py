@@ -424,8 +424,19 @@ def get_track_recommender(song_list, n_songs=5):
     rec_songs = rec_songs[~rec_songs['name'].isin([s['name'] for s in song_list])]
     return rec_songs[['name', 'year', 'artists']].to_dict(orient='records')
 
+# Obtener tamaño de los modelos en MB
+def get_model_size(model_path):
+    size_bytes = os.path.getsize(model_path)
+    size_mb = size_bytes / (1024 * 1024)
+    return size_mb
+
 # Inicialización
 if __name__ == "__main__":
-    data, genre_data, audio_features = load_data()
-    train_and_save_models(data, genre_data, audio_features)
-    print("Modelos entrenados y guardados en /models/")
+     data, genre_data, audio_features = load_data()
+     train_and_save_models(data, genre_data, audio_features)
+     print("Modelos entrenados y guardados en /models/")
+
+     print(f"\nTamaño de los modelos:")
+     print(f"- genre_pipeline.joblib: {get_model_size('models/genre_pipeline.joblib'):.2f} MB")
+     print(f"- song_pipeline.joblib: {get_model_size('models/song_pipeline.joblib'):.2f} MB")
+     print(f"- spotify_data.joblib: {get_model_size('models/spotify_data.joblib'):.2f} MB")
