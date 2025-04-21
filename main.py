@@ -384,6 +384,9 @@ def load_data():
 
 # Entrenar y guardar modelos
 def train_and_save_models(data, genre_data, audio_features):
+    # Crear directorio si no existe (con rutas absolutas para mayor seguridad)
+    os.makedirs('models', exist_ok=True)
+
     # Pipeline para géneros
     genre_pipeline = Pipeline([
         ('scaler', StandardScaler()),
@@ -399,9 +402,9 @@ def train_and_save_models(data, genre_data, audio_features):
     song_pipeline.fit(data.select_dtypes(np.number))
     
     # Guardar modelos y datos
-    joblib.dump(genre_pipeline, 'models/genre_pipeline.joblib')
-    joblib.dump(song_pipeline, 'models/song_pipeline.joblib')
-    joblib.dump(data, 'models/spotify_data.joblib')
+    joblib.dump(genre_pipeline, os.path.join('models', 'genre_pipeline.joblib'))
+    joblib.dump(song_pipeline, os.path.join('models', 'song_pipeline.joblib'))
+    joblib.dump(data, os.path.join('models', 'spotify_data.joblib'))
 
 # Función de recomendación principal
 def get_track_recommender(song_list, n_songs=5):
