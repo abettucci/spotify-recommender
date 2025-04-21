@@ -88,7 +88,7 @@ with tab2:
     
     # Opciones de filtrado
     with st.expander("Filtrar por período"):
-        col1, col2 = col3 = st.columns(3)
+        col1, col2, col3 = st.columns(3)
         with col1:
             last_n_days = st.selectbox("Últimos días", list(range(0, 31)), 0)
         with col2:
