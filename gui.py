@@ -99,7 +99,7 @@ with tab2:
     # Botón para buscar
     if st.button("Buscar canciones"):
         if last_n_days > 0:
-            df_songs = get_historical_played(sp_client, datetime.now(), datetime.now() - timedelta(days=last_n_days))
+            df_songs = get_historical_played(sp_client, datetime.now() - timedelta(days=last_n_days), datetime.now())
         elif target_day_name:
             df_songs = get_played_on_specific_days(sp_client, target_day_name)
         elif last_n_weeks > 0:
