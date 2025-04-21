@@ -40,10 +40,10 @@ jobs:
     needs: train-models
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Download models
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: spotify-models
         path: models/
