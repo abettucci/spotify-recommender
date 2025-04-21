@@ -1,41 +1,114 @@
 import streamlit as st
-import requests
-import urllib.parse
-from main import logueo_spotify, get_track_recommender, recommendation_genre_seeds, get_related_artists
+from datetime import datetime, timedelta
+import joblib
+from main import (
+    logueo_spotify, 
+    get_track_recommender, 
+    get_historical_played,
+    get_played_on_specific_days,
+    get_played_in_recent_period
+)
 
-def make_clickable(link):
-    return f'<a href="{link}" target="_blank">{link}</a>'
+try:
+    song_pipeline = joblib.load('models/song_pipeline.joblib')
+    spotify_data = joblib.load('models/spotify_data.joblib')
+except FileNotFoundError:
+    st.error("Error: Modelos no encontrados. Ejecuta main.py primero.")
+    st.stop()
 
-# Create a title for the web app.
-st.title("Spotify API Recommender")
-
+# Configuración inicial
+st.set_page_config(page_title="Spotify Recommender", layout="wide")
 sp_client = logueo_spotify()
 
-available_genres = st.selectbox("Generos posibles", recommendation_genre_seeds(sp_client), 0)
+# Título de la app
+st.title("Spotify API Recommender")
 
-##### RECOMENDADOR DE TRACKS EN FUNCION DE ARTISTA, GENERO Y TRACKS #####
+# --- Pestañas para separar las features ---
+tab1, tab2 = st.tabs(["🎵 Recomendar canciones", "📅 Últimas reproducidas"])
 
-# Take user input
-seed_artists = st.text_input("Artistas de referencia", "")
-seed_genres = str(st.text_input("Generos de referencia", "")).lower()
-seed_tracks = st.text_input("Cancion de referencia", "")
-# country = st.text_input("Pais de origen de la cancion a recomendar:", "")
-limit = st.text_input("Cantidad de recomendaciones", "")
-# Create a button to submit the form.
-submit = st.button("Submit")
+with tab1:
+    # --- Feature 1: Recomendar canciones ---
+    st.header("Recomendar canciones basadas en tus favoritas")
+    
+    # Inicializar lista de canciones en session_state
+    if 'song_list' not in st.session_state:
+        st.session_state.song_list = []
 
-# If the button is clicked.
-if submit:
-    dict_results = get_track_recommender(sp_client, seed_artists, seed_genres, seed_tracks, 1 if limit=='' else int(limit), None)
-    dict_results['song_url'] = dict_results['song_url'].apply(make_clickable)
-    st.markdown(dict_results.to_html(escape=False), unsafe_allow_html=True)
+    # Formulario para agregar canciones
+    with st.form("song_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            song_name = st.text_input("Nombre de la canción", key="song_name")
+        with col2:
+            artist_name = st.text_input("Artista", key="artist_name")
+        
+        add_button = st.form_submit_button("Agregar canción")
 
-##### BUSCADOR DE ARTISTAS SIMILARES EN FUNCION DE ARTISTAS #####
-artists_names = st.text_input("Artistas de referencia", "")
-# Create a button to submit the form.
-submit2 = st.button("Submit")
+        # Validar y agregar a la lista
+        if add_button:
+            if not song_name or not artist_name:
+                st.error("¡Debes completar ambos campos!")
+            else:
+                st.session_state.song_list.append({"name": song_name, "artist": artist_name})
+                st.success(f"✅ Canción agregada: '{song_name}' de '{artist_name}'")
 
-# If the button is clicked.
-if submit2:
-    dict_results = get_related_artists(sp_client, artists_names)
-    st.markdown(dict_results.to_html(escape=False), unsafe_allow_html=True)
+    # Mostrar lista de canciones agregadas
+    st.subheader("Tus canciones seleccionadas")
+    if st.session_state.song_list:
+        for idx, song in enumerate(st.session_state.song_list, 1):
+            st.write(f"{idx}. {song['name']} - {song['artist']}")
+    else:
+        st.warning("No hay canciones agregadas aún.")
+
+    # Botón para generar recomendaciones
+    with st.form("recommend_form"):
+        limit = st.number_input("Número de recomendaciones", min_value=1, max_value=20, value=5)
+        submit_recommend = st.form_submit_button("Generar recomendaciones")
+
+        if submit_recommend and st.session_state.song_list:
+            # Llamar a la función de recomendación (ajusta según tu implementación)
+            recommendations = get_track_recommender(
+                seed_tracks=[song["name"] for song in st.session_state.song_list],
+                limit=limit
+            )
+            
+            # Mostrar resultados
+            if recommendations:
+                st.success("🎧 Recomendaciones:")
+                for track in recommendations:
+                    st.write(f"- {track['name']} by {track['artist']}")
+            else:
+                st.error("No se encontraron recomendaciones.")
+        elif submit_recommend:
+            st.error("¡Agrega al menos una canción!")
+
+with tab2:
+    # --- Feature 2: Últimas canciones reproducidas ---
+    st.header("Tus últimas canciones reproducidas")
+    
+    # Opciones de filtrado
+    with st.expander("Filtrar por período"):
+        col1, col2 = col3 = st.columns(3)
+        with col1:
+            last_n_days = st.selectbox("Últimos días", list(range(0, 31)), 0)
+        with col2:
+            target_day_name = st.selectbox("Día de la semana", ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'], 0)
+        with col3:
+            last_n_weeks = st.selectbox("Últimas semanas", list(range(0, 5)), 0)
+    
+    # Botón para buscar
+    if st.button("Buscar canciones"):
+        if last_n_days > 0:
+            df_songs = get_historical_played(sp_client, datetime.now(), datetime.now() - timedelta(days=last_n_days))
+        elif target_day_name:
+            df_songs = get_played_on_specific_days(sp_client, target_day_name)
+        elif last_n_weeks > 0:
+            df_songs = get_played_in_recent_period(sp_client, 'week', last_n_weeks)
+        else:
+            st.warning("Selecciona un filtro válido.")
+            df_songs = None
+
+        # Mostrar resultados
+        if df_songs is not None:
+            st.write(f"🎶 Canciones encontradas: {len(df_songs)}")
+            st.dataframe(df_songs)

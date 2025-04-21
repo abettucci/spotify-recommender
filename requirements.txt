@@ -1,5 +1,13 @@
 spotipy
 streamlit
 pandas
+seaborn
+tensorflow
+datasets
+matplotlib
+scikit-learn
+utils
+huggingface_hub
+# lightfm
 # fastapi
 # mangum

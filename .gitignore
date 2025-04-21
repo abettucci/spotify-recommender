@@ -5,3 +5,7 @@
 /serverless.yml
 /app.py
 /.cache
+/fma_metadata
+/kaggle_main.py
+/Spotify-2000.csv
+/test.py
