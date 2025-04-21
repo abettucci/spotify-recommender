@@ -182,11 +182,15 @@ def get_historical_played(sp_client, start_date, end_date):
      while current_after < end_timestamp:
           # Llamar a la API de Spotify
           response = sp_client.current_user_recently_played(
-               limit=50, after=current_after
+               limit=50, 
+               after=current_after
           )
 
           # Agregar canciones recuperadas
           played_songs = response.get("items", [])
+
+          # print(played_songs)
+
           all_played_songs.extend(played_songs)
 
           # Si no hay más canciones o no se recuperaron resultados, detener la iteración
@@ -198,7 +202,7 @@ def get_historical_played(sp_client, start_date, end_date):
                song["played_at"] for song in played_songs
           )
           current_after = int(datetime.fromisoformat(current_after[:-1]).timestamp()) * 1000
-
+     
      df_song_results = convertir_a_dataframe(all_played_songs)
 
      return df_song_results
@@ -436,7 +440,7 @@ if __name__ == "__main__":
      train_and_save_models(data, genre_data, audio_features)
      print("Modelos entrenados y guardados en /models/")
 
-     print(f"\nTamaño de los modelos:")
-     print(f"- genre_pipeline.joblib: {get_model_size('models/genre_pipeline.joblib'):.2f} MB")
-     print(f"- song_pipeline.joblib: {get_model_size('models/song_pipeline.joblib'):.2f} MB")
-     print(f"- spotify_data.joblib: {get_model_size('models/spotify_data.joblib'):.2f} MB")
+     # print(f"\nTamaño de los modelos:")
+     # print(f"- genre_pipeline.joblib: {get_model_size('models/genre_pipeline.joblib'):.2f} MB")
+     # print(f"- song_pipeline.joblib: {get_model_size('models/song_pipeline.joblib'):.2f} MB")
+     # print(f"- spotify_data.joblib: {get_model_size('models/spotify_data.joblib'):.2f} MB")
