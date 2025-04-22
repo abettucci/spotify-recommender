@@ -275,9 +275,9 @@ sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id,
 number_cols = ['valence', 'year', 'acousticness', 'danceability', 'duration_ms', 'energy', 'explicit',
  'instrumentalness', 'key', 'liveness', 'loudness', 'mode', 'popularity', 'speechiness', 'tempo']
 
-def find_song(name, year):
+def find_song(name, artist):
     song_data = defaultdict()
-    results = sp.search(q= 'track: {} year: {}'.format(name,year), limit=1)
+    results = sp.search(q= 'track: {} artist: {}'.format(name, artist), limit=1)
     if results['tracks']['items'] == []:
         return None
 
@@ -291,7 +291,7 @@ def find_song(name, year):
     else:
         # Si se encuentran características de audio, usar la primera fila
         song_data['name'].append(name)
-        song_data['year'].append(year)
+        song_data['artist'].append(artist)
         song_data['explicit'].append(int(results['explicit']))
         song_data['duration_ms'].append(results['duration_ms'])
         song_data['popularity'].append(results['popularity'])
@@ -304,29 +304,33 @@ def find_song(name, year):
     # Crear y devolver el DataFrame
     return pd.DataFrame(song_data)
 
-def get_song_data(song, spotify_data):
+def get_song_data(dict_song_artist, spotify_data):
+    
     try:
-        song_data = spotify_data[(spotify_data['name'] == song['name']) 
-                                & (spotify_data['year'] == song['year'])].iloc[0]
+        song_data = spotify_data[
+             (spotify_data['name'].str.lower() == dict_song_artist['name'].lower()) & 
+             (spotify_data['artist'].str.lower() == dict_song_artist['artist'].lower())
+          ].iloc[0] 
+          #   & (spotify_data['year'] == song['year'])].iloc[0]
         return song_data
     except IndexError:
-        return find_song(song['name'], song['year'])
+        return find_song(dict_song_artist['name'], dict_song_artist['artist']) #, song['year'])
 
-def get_mean_vector(song_list, spotify_data):
+def get_mean_vector(list_song_artist_dict, spotify_data):
     
     song_vectors = []
     
-    for song in song_list:
+    for dict_song_artist in list_song_artist_dict:
         # Filtrar datos de base de datos entera de spotify_data para traer la info de las canciones que estamos usando de 
         # input (cada song en song_list)
-        song_data = get_song_data(song, spotify_data)
+        song_data = get_song_data(dict_song_artist, spotify_data)
 
         # Forzar DataFrame si es Series
         if isinstance(song_data, pd.Series):
             song_data = song_data.to_frame().T
 
         if song_data.empty:
-            print(f"No se encontró información para: {song['name']} ({song['year']})")
+            print(f"No se encontró información para: {dict_song_artist['name']} ({dict_song_artist['artist']})")
             continue
 
         try:
@@ -411,9 +415,9 @@ def train_and_save_models(data, genre_data, audio_features):
     joblib.dump(data, os.path.join('models', 'spotify_data.joblib'))
 
 # Función de recomendación principal
-def get_track_recommender(song_list, n_songs, song_pipeline, spotify_data):
+def get_track_recommender(list_song_artist_dict, n_songs, song_pipeline, spotify_data):
     # Obtener recomendaciones
-    song_center = get_mean_vector(song_list, spotify_data)
+    song_center = get_mean_vector(list_song_artist_dict, spotify_data)
     scaler = song_pipeline.steps[0][1]
     scaled_data = scaler.transform(spotify_data[number_cols])
     scaled_song_center = scaler.transform(song_center.reshape(1, -1))
@@ -421,8 +425,8 @@ def get_track_recommender(song_list, n_songs, song_pipeline, spotify_data):
     index = list(np.argsort(distances)[:, :n_songs][0])
     
     rec_songs = spotify_data.iloc[index]
-    rec_songs = rec_songs[~rec_songs['name'].isin([s['name'] for s in song_list])]
-    return rec_songs[['name', 'year', 'artists']].to_dict(orient='records')
+    rec_songs = rec_songs[~rec_songs['name'].isin([s['name'] for s in list_song_artist_dict])]
+    return rec_songs[['name','artists']].to_dict(orient='records')
 
 # Obtener tamaño de los modelos en MB
 def get_model_size(model_path):
