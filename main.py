@@ -411,11 +411,7 @@ def train_and_save_models(data, genre_data, audio_features):
     joblib.dump(data, os.path.join('models', 'spotify_data.joblib'))
 
 # Función de recomendación principal
-def get_track_recommender(song_list, n_songs=5):
-    # Cargar modelo y datos
-    song_pipeline = joblib.load('models/song_pipeline.joblib')
-    spotify_data = joblib.load('models/spotify_data.joblib')
-    
+def get_track_recommender(song_list, n_songs, song_pipeline, spotify_data):
     # Obtener recomendaciones
     song_center = get_mean_vector(song_list, spotify_data)
     scaler = song_pipeline.steps[0][1]

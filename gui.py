@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 from datetime import datetime, timedelta
 import joblib
 from main import (
@@ -10,6 +11,8 @@ from main import (
 )
 
 try:
+    print("Contenido de models/:", os.listdir("models"))
+
     song_pipeline = joblib.load('models/song_pipeline.joblib')
     spotify_data = joblib.load('models/spotify_data.joblib')
 except FileNotFoundError:
@@ -66,11 +69,12 @@ with tab1:
         submit_recommend = st.form_submit_button("Generar recomendaciones")
 
         if submit_recommend and st.session_state.song_list:
+            print([song["name"] for song in st.session_state.song_list])
             # Llamar a la función de recomendación (ajusta según tu implementación)
-            recommendations = get_track_recommender(
-                seed_tracks=[song["name"] for song in st.session_state.song_list],
-                limit=limit
-            )
+            recommendations = get_track_recommender([song["name"] for song in st.session_state.song_list],
+                                                    limit,
+                                                    song_pipeline, 
+                                                    spotify_data)
             
             # Mostrar resultados
             if recommendations:
@@ -90,11 +94,11 @@ with tab2:
     with st.expander("Filtrar por período"):
         col1, col2, col3 = st.columns(3)
         with col1:
-            last_n_days = st.selectbox("Últimos días", list(range(0, 31)), 0)
+            last_n_days = st.selectbox("Últimos días", list(range(0, 31)), 0, placeholder="Elegi cuantos dias de info")
         with col2:
-            target_day_name = st.selectbox("Día de la semana", ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'], 0)
+            target_day_name = st.selectbox("Día de la semana", ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'], 0, placeholder="Elegi un dia de la semana")
         with col3:
-            last_n_weeks = st.selectbox("Últimas semanas", list(range(0, 5)), 0)
+            last_n_weeks = st.selectbox("Últimas semanas", list(range(0, 5)), 0, placeholder="Elegi cuantas semanas de info")
     
     # Botón para buscar
     if st.button("Buscar canciones"):
