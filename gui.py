@@ -69,7 +69,7 @@ with tab1:
         submit_recommend = st.form_submit_button("Generar recomendaciones")
 
         if submit_recommend and st.session_state.song_list:
-            lista_de_dict_cancion_artista = [{song["name"], song["artist"]} for song in st.session_state.song_list]
+            lista_de_dict_cancion_artista = [{"name": song["name"], "artist": song["artist"]} for song in st.session_state.song_list]
             print(lista_de_dict_cancion_artista)
             # Llamar a la función de recomendación
             recommendations = get_track_recommender(lista_de_dict_cancion_artista,
