@@ -18,12 +18,16 @@ from scipy.spatial.distance import cdist
 from collections import defaultdict
 import warnings
 import joblib
+import ast
 
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
-client_id = os.getenv('client_id')
-client_secret = os.getenv('client_secret')
+# client_id = os.getenv('client_id')
+# client_secret = os.getenv('client_secret')
+
+client_id = '15b3ce0d808243708ebd24340d70f9c0'
+client_secret = 'c5159ef672b145bf879dda11ac9f4077'
 
 def logueo_spotify():
      sp_client = spotipy.Spotify(auth_manager=SpotifyOAuth(
@@ -305,16 +309,15 @@ def find_song(name, artist):
     return pd.DataFrame(song_data)
 
 def get_song_data(dict_song_artist, spotify_data):
-    
     try:
         song_data = spotify_data[
-             (spotify_data['name'].str.lower() == dict_song_artist['name'].lower()) & 
-             (spotify_data['artist'].str.lower() == dict_song_artist['artist'].lower())
-          ].iloc[0] 
-          #   & (spotify_data['year'] == song['year'])].iloc[0]
+            (spotify_data['name'].str.lower() == dict_song_artist['name'].lower()) &
+            (spotify_data['artist'].apply(lambda artist_list: dict_song_artist['artist'].lower() in 
+                                          [a.lower() for a in artist_list]))
+        ].iloc[0]
         return song_data
     except IndexError:
-        return find_song(dict_song_artist['name'], dict_song_artist['artist']) #, song['year'])
+        return find_song(dict_song_artist['name'], dict_song_artist['artist'])
 
 def get_mean_vector(list_song_artist_dict, spotify_data):
     
@@ -377,6 +380,7 @@ def flatten_dict_list(dict_list):
 def load_data():
      data = pd.read_csv("data/data.csv")
      genre_data = pd.read_csv('data/data_by_genres.csv')
+     artists_data = pd.read_csv('data/data_by_artist.csv')
      audio_features = pd.read_csv('spotify-tracks-dataset.csv')
 
      # Eliminar duplicados
@@ -388,31 +392,39 @@ def load_data():
           audio_features = audio_features.drop_duplicates()
           print(f'After drop duplicated rows, there are {data.shape[0]} rows left')
      
-     return data, genre_data, audio_features
+     return data, genre_data, audio_features, artists_data
 
 # Entrenar y guardar modelos
-def train_and_save_models(data, genre_data, audio_features):
-    # Crear directorio si no existe (con rutas absolutas para mayor seguridad)
-    os.makedirs('models', exist_ok=True)
+def train_and_save_models(data, genre_data, audio_features, artists_data):
+     # Crear directorio si no existe (con rutas absolutas para mayor seguridad)
+     os.makedirs('models', exist_ok=True)
 
-    # Pipeline para géneros
-    genre_pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-        ('kmeans', KMeans(n_clusters=10))
-    ])
-    genre_pipeline.fit(genre_data.select_dtypes(np.number))
+     # Pipeline para géneros
+     genre_pipeline = Pipeline([
+          ('scaler', StandardScaler()),
+          ('kmeans', KMeans(n_clusters=10))
+     ])
+     genre_pipeline.fit(genre_data.select_dtypes(np.number))
+
+     # Pipeline para canciones
+     song_pipeline = Pipeline([
+          ('scaler', StandardScaler()),
+          ('kmeans', KMeans(n_clusters=20))
+     ])
+     song_pipeline.fit(data.select_dtypes(np.number))
+
+     # Pipeline para artistas
+     artist_pipeline = Pipeline([
+          ('scaler', StandardScaler()),
+          ('kmeans', KMeans(n_clusters=20))
+     ])
+     artist_pipeline.fit(artists_data.select_dtypes(np.number))
     
-    # Pipeline para canciones
-    song_pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-        ('kmeans', KMeans(n_clusters=20))
-    ])
-    song_pipeline.fit(data.select_dtypes(np.number))
-    
-    # Guardar modelos y datos
-    joblib.dump(genre_pipeline, os.path.join('models', 'genre_pipeline.joblib'))
-    joblib.dump(song_pipeline, os.path.join('models', 'song_pipeline.joblib'))
-    joblib.dump(data, os.path.join('models', 'spotify_data.joblib'))
+     # Guardar modelos y datos
+     joblib.dump(genre_pipeline, os.path.join('models', 'genre_pipeline.joblib'))
+     joblib.dump(song_pipeline, os.path.join('models', 'song_pipeline.joblib'))
+     joblib.dump(artist_pipeline, os.path.join('models', 'artist_pipeline.joblib'))
+     joblib.dump(data, os.path.join('models', 'spotify_data.joblib'))
 
 # Función de recomendación principal
 def get_track_recommender(list_song_artist_dict, n_songs, song_pipeline, spotify_data):
@@ -436,8 +448,8 @@ def get_model_size(model_path):
 
 # Inicialización
 if __name__ == "__main__":
-     data, genre_data, audio_features = load_data()
-     train_and_save_models(data, genre_data, audio_features)
+     data, genre_data, audio_features, artists_data = load_data()
+     train_and_save_models(data, genre_data, audio_features, artists_data)
      print("Modelos entrenados y guardados en /models/")
 
      # print(f"\nTamaño de los modelos:")
