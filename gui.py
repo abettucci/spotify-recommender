@@ -15,6 +15,7 @@ try:
 
     song_pipeline = joblib.load('models/song_pipeline.joblib')
     spotify_data = joblib.load('models/spotify_data.joblib')
+    audio_features = joblib.load('models/audio_features.joblib')
 except FileNotFoundError:
     st.error("Error: Modelos no encontrados. Ejecuta main.py primero.")
     st.stop()
