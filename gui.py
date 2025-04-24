@@ -76,7 +76,8 @@ with tab1:
             recommendations = get_track_recommender(lista_de_dict_cancion_artista,
                                                     limit,
                                                     song_pipeline, 
-                                                    spotify_data)
+                                                    spotify_data,
+                                                    audio_features)
             
             # Mostrar resultados
             if recommendations:
