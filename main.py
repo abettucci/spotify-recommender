@@ -279,7 +279,7 @@ sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id,
 number_cols = ['valence', 'year', 'acousticness', 'danceability', 'duration_ms', 'energy', 'explicit',
  'instrumentalness', 'key', 'liveness', 'loudness', 'mode', 'popularity', 'speechiness', 'tempo']
 
-def find_song(name, artist):
+def find_song(name, artist, audio_features):
     song_data = defaultdict()
     results = sp.search(q= 'track: {} artist: {}'.format(name, artist), limit=1)
     if results['tracks']['items'] == []:
@@ -308,7 +308,7 @@ def find_song(name, artist):
     # Crear y devolver el DataFrame
     return pd.DataFrame(song_data)
 
-def get_song_data(dict_song_artist, spotify_data):
+def get_song_data(dict_song_artist, spotify_data, audio_features):
     try:
         song_data = spotify_data[
             (spotify_data['name'].str.lower() == dict_song_artist['name'].lower()) &
@@ -317,16 +317,16 @@ def get_song_data(dict_song_artist, spotify_data):
         ].iloc[0]
         return song_data
     except IndexError:
-        return find_song(dict_song_artist['name'], dict_song_artist['artist'])
+        return find_song(dict_song_artist['name'], dict_song_artist['artist'], audio_features)
 
-def get_mean_vector(list_song_artist_dict, spotify_data):
+def get_mean_vector(list_song_artist_dict, spotify_data, audio_features):
     
     song_vectors = []
     
     for dict_song_artist in list_song_artist_dict:
         # Filtrar datos de base de datos entera de spotify_data para traer la info de las canciones que estamos usando de 
         # input (cada song en song_list)
-        song_data = get_song_data(dict_song_artist, spotify_data)
+        song_data = get_song_data(dict_song_artist, spotify_data, audio_features)
 
         # Forzar DataFrame si es Series
         if isinstance(song_data, pd.Series):
@@ -427,9 +427,9 @@ def train_and_save_models(data, genre_data, audio_features, artists_data):
      joblib.dump(data, os.path.join('models', 'spotify_data.joblib'))
 
 # Función de recomendación principal
-def get_track_recommender(list_song_artist_dict, n_songs, song_pipeline, spotify_data):
+def get_track_recommender(list_song_artist_dict, n_songs, song_pipeline, spotify_data, audio_features):
     # Obtener recomendaciones
-    song_center = get_mean_vector(list_song_artist_dict, spotify_data)
+    song_center = get_mean_vector(list_song_artist_dict, spotify_data, audio_features)
     scaler = song_pipeline.steps[0][1]
     scaled_data = scaler.transform(spotify_data[number_cols])
     scaled_song_center = scaler.transform(song_center.reshape(1, -1))
