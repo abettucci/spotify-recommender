@@ -312,7 +312,7 @@ def get_song_data(dict_song_artist, spotify_data):
     try:
         song_data = spotify_data[
             (spotify_data['name'].str.lower() == dict_song_artist['name'].lower()) &
-            (spotify_data['artist'].apply(lambda artist_list: dict_song_artist['artist'].lower() in 
+            (spotify_data['artists'].apply(lambda artist_list: dict_song_artist['artist'].lower() in 
                                           [a.lower() for a in artist_list]))
         ].iloc[0]
         return song_data
