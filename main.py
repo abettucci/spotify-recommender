@@ -425,6 +425,7 @@ def train_and_save_models(data, genre_data, audio_features, artists_data):
      joblib.dump(song_pipeline, os.path.join('models', 'song_pipeline.joblib'))
      joblib.dump(artist_pipeline, os.path.join('models', 'artist_pipeline.joblib'))
      joblib.dump(data, os.path.join('models', 'spotify_data.joblib'))
+     joblib.dump(audio_features, os.path.join('models', 'audio_features.joblib'))
 
 # Función de recomendación principal
 def get_track_recommender(list_song_artist_dict, n_songs, song_pipeline, spotify_data, audio_features):
